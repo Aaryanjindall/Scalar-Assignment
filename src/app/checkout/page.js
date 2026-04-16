@@ -36,10 +36,11 @@ export default function Checkout() {
     }
   }, []);
 
+  useEffect(() => {
   if (cartItems.length === 0) {
     router.push('/cart');
-    return null;
   }
+}, [cartItems, router]);
 
   if (!user) {
     return null; 

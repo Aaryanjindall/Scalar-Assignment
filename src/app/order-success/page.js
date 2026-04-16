@@ -1,8 +1,10 @@
-"use client";
-import { useSearchParams } from "next/navigation";
-import Navbar from "@/components/Navbar";
+'use client';
 
-export default function Success() {
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Navbar from '../components/Navbar';
+
+function SuccessContent() {
   const params = useSearchParams();
   const orderId = params.get("orderId");
 
@@ -18,5 +20,13 @@ export default function Success() {
         <p className="mt-2">Order ID: {orderId}</p>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SuccessContent />
+    </Suspense>
   );
 }
