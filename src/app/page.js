@@ -1,65 +1,88 @@
-import Image from "next/image";
+import ProductCard from '@/components/ProductCard';
+import CategoriesBar from '@/components/CategoriesBar';
+import HeroCarousel from '@/components/HeroCarousel';
+import { query } from '@/lib/db';
 
-export default function Home() {
+export const dynamic = 'force-dynamic'; // Ensures realtime DB fetch when search/category changes
+
+export default async function Home(props) {
+  const searchParams = await props.searchParams;
+  const { search, category } = searchParams;
+
+  let products = [];
+  try {
+    let sql = 'SELECT * FROM products';
+    const params = [];
+    const conditions = [];
+
+    if (search) {
+      conditions.push(`name ILIKE $${params.length + 1}`);
+      params.push(`%${search}%`);
+    }
+    if (category) {
+      conditions.push(`category = $${params.length + 1}`);
+      params.push(category);
+    }
+
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    sql += ' ORDER BY id DESC';
+
+    const { rows } = await query(sql, params);
+    products = rows;
+  } catch (e) {
+    console.error("Failed to fetch products directly from DB", e);
+  }
+
+  // To simulate the 'Add to your wishlist' section, pick first 4 items
+  const wishlistSuggestions = products.slice(0, 4);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex flex-col bg-[#f1f3f6]">
+      {!search && <CategoriesBar />}
+      {!search && <HeroCarousel />}
+
+      <div className="w-full max-w-[1248px] mx-auto mt-4 px-2 md:px-0">
+        
+        {/* Wishlist Suggestion Block (Only when not searching) */}
+        {!search && !category && wishlistSuggestions.length > 0 && (
+          <div className="w-full bg-[#d5f3e6] p-4 rounded-sm shadow-sm mb-4">
+            <h2 className="text-[22px] font-medium text-[#212121] mb-4">Add to your wishlist</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {wishlistSuggestions.map(product => (
+                <ProductCard key={`wishlist-${product.id}`} product={product} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col md:flex-row gap-2 mt-2">
+          {/* Main Content Area */}
+          <div className="flex-1 bg-white shadow-sm p-4 min-h-[500px]">
+            {(search || category) && (
+              <h2 className="text-[16px] mb-4 font-medium border-b pb-2">
+                Showing results {search && `for "${search}"`} {category && `in category "${category}"`}
+              </h2>
+            )}
+            
+            {products.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-[400px]">
+                <img src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/error-no-search-results_2353c5.png" alt="No results" className="w-[300px] mb-4" />
+                <h3 className="text-[20px] font-medium text-[#212121]">Sorry, no results found!</h3>
+                <p className="text-[#878787] mt-2 text-[14px]">Please check the spelling or try searching for something else</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {products.map(product => (
+                  <ProductCard key={`main-${product.id}`} product={product} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }
