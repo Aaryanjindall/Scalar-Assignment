@@ -25,7 +25,7 @@ export default function ProductCard({ product }) {
   const discountPercent = calculateDiscount(product.price, product.discounted_price);
 
   return (
-    <Link href={`/product/${product.id}`} className="group block bg-white p-4 hover:shadow-lg transition-shadow relative border border-gray-100 md:border-transparent md:hover:border-gray-200">
+    <Link href={`/product/${product.id}`} className="group block bg-white p-5 rounded-2xl hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 relative border border-gray-100 hover:-translate-y-1">
       <button 
         onClick={toggleWishlist} 
         className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-white shadow-sm border border-gray-100"
@@ -36,7 +36,7 @@ export default function ProductCard({ product }) {
         />
       </button>
 
-      <div className="h-[200px] flex items-center justify-center mb-4">
+      <div className="h-[220px] flex items-center justify-center mb-5 p-4 bg-[#f8f9fa] rounded-xl overflow-hidden">
         <img 
           src={product.image_url} 
           alt={product.name} 
@@ -44,8 +44,8 @@ export default function ProductCard({ product }) {
         />
       </div>
 
-      <div className="text-center md:text-left">
-        <h3 className="text-[14px] font-medium text-gray-800 line-clamp-1 group-hover:text-fk-blue transition-colors">
+      <div className="text-center md:text-left mt-2">
+        <h3 className="text-[15px] font-semibold text-gray-800 line-clamp-1 group-hover:text-fk-blue transition-colors">
           {product.name}
         </h3>
         

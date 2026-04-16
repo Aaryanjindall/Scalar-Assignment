@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 export default function Checkout() {
   const { cartItems, subtotal, totalOriginalPrice, discount, clearCart } = useCart();
-  const { user, isLoaded } = useAuth();
+  const { user, isLoaded, setShowLoginModal } = useAuth();
   const router = useRouter();
   
   const [address, setAddress] = useState({
@@ -20,19 +20,29 @@ export default function Checkout() {
   });
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (isLoaded && !user) {
+      setShowLoginModal(true);
+      router.push('/cart');
+    }
+  }, [user, isLoaded, router, setShowLoginModal]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('fk_address');
+    if (saved) {
+      try {
+        setAddress(JSON.parse(saved));
+      } catch(e) {}
+    }
+  }, []);
+
   if (cartItems.length === 0) {
     router.push('/cart');
     return null;
   }
 
-  if (isLoaded && !user) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 bg-white min-h-[500px] mt-4 max-w-[1248px] mx-auto shadow-sm">
-         <img src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/myorders-empty_3b1b61.png" className="w-48 mb-4"/>
-         <h2 className="text-xl font-medium mb-2">Please log in to checkout</h2>
-         <p className="text-gray-500 mb-6">You need an active session to place an order</p>
-      </div>
-    );
+  if (!user) {
+    return null; 
   }
 
   const handleInputChange = (e) => {
@@ -43,6 +53,9 @@ export default function Checkout() {
     e.preventDefault();
     setLoading(true);
     
+    // Save address locally
+    localStorage.setItem('fk_address', JSON.stringify(address));
+
     const addressStr = `${address.name}, ${address.phone}, ${address.fullAddress}, ${address.locality}, ${address.city}, ${address.state} - ${address.pincode}`;
     
     try {
@@ -50,7 +63,7 @@ export default function Checkout() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: 1, // Default user
+          userId: user.id,
           items: cartItems.map(item => ({
             id: item.id,
             quantity: item.quantity,
@@ -78,7 +91,6 @@ export default function Checkout() {
 
   return (
     <div className="flex flex-col md:flex-row gap-4 mt-4 px-2">
-      {/* Left: Address Form */}
       <div className="flex-1 bg-white shadow-sm p-0 md:p-0 h-fit">
         <div className="bg-fk-blue text-white px-6 py-4 font-medium text-[16px] uppercase shadow-sm">
           Delivery Address
@@ -86,19 +98,19 @@ export default function Checkout() {
         
         <form onSubmit={handlePlaceOrder} className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <input required type="text" name="name" placeholder="Name" className="border p-3 outline-none focus:border-fk-blue rounded-sm" onChange={handleInputChange} />
-            <input required type="text" name="phone" placeholder="10-digit mobile number" className="border p-3 outline-none focus:border-fk-blue rounded-sm" onChange={handleInputChange} />
-            <input required type="text" name="pincode" placeholder="Pincode" className="border p-3 outline-none focus:border-fk-blue rounded-sm" onChange={handleInputChange} />
-            <input required type="text" name="locality" placeholder="Locality" className="border p-3 outline-none focus:border-fk-blue rounded-sm" onChange={handleInputChange} />
+            <input required type="text" name="name" value={address.name} placeholder="Name" className="border p-3 outline-none focus:border-fk-blue rounded-sm" onChange={handleInputChange} />
+            <input required type="text" name="phone" value={address.phone} placeholder="10-digit mobile number" className="border p-3 outline-none focus:border-fk-blue rounded-sm" onChange={handleInputChange} />
+            <input required type="text" name="pincode" value={address.pincode} placeholder="Pincode" className="border p-3 outline-none focus:border-fk-blue rounded-sm" onChange={handleInputChange} />
+            <input required type="text" name="locality" value={address.locality} placeholder="Locality" className="border p-3 outline-none focus:border-fk-blue rounded-sm" onChange={handleInputChange} />
           </div>
           
           <div className="mb-4">
-            <textarea required name="fullAddress" placeholder="Address (Area and Street)" className="w-full border p-3 outline-none focus:border-fk-blue rounded-sm h-24" onChange={handleInputChange}></textarea>
+            <textarea required name="fullAddress" value={address.fullAddress} placeholder="Address (Area and Street)" className="w-full border p-3 outline-none focus:border-fk-blue rounded-sm h-24" onChange={handleInputChange}></textarea>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <input required type="text" name="city" placeholder="City/District/Town" className="border p-3 outline-none focus:border-fk-blue rounded-sm" onChange={handleInputChange} />
-            <input required type="text" name="state" placeholder="State" className="border p-3 outline-none focus:border-fk-blue rounded-sm" onChange={handleInputChange} />
+            <input required type="text" name="city" value={address.city} placeholder="City/District/Town" className="border p-3 outline-none focus:border-fk-blue rounded-sm" onChange={handleInputChange} />
+            <input required type="text" name="state" value={address.state} placeholder="State" className="border p-3 outline-none focus:border-fk-blue rounded-sm" onChange={handleInputChange} />
           </div>
           
           <button 
@@ -111,7 +123,6 @@ export default function Checkout() {
         </form>
       </div>
 
-      {/* Right: Order Summary */}
       <div className="w-full md:w-[350px]">
         <div className="bg-white shadow-sm sticky top-[72px]">
           <div className="px-6 py-3 border-b text-gray-500 uppercase font-medium text-[15px]">

@@ -2,10 +2,12 @@
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Cart() {
   const { cartItems, removeFromCart, updateQuantity, subtotal, totalOriginalPrice, discount } = useCart();
-  const { user, isLoaded } = useAuth();
+  const { user, isLoaded, setShowLoginModal } = useAuth();
+  const router = useRouter();
 
   if (cartItems.length === 0) {
     return (
@@ -24,10 +26,25 @@ export default function Cart() {
     );
   }
 
+  const handleAction = (actionFn, ...args) => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    actionFn(...args);
+  };
+
+  const handleCheckout = () => {
+    if (!user) {
+      setShowLoginModal(true);
+    } else {
+      router.push('/checkout');
+    }
+  };
+
   return (
-    <div className="flex flex-col md:flex-row gap-4 mt-4 px-2">
-      {/* Left: Cart Items */}
-      <div className="flex-1 bg-white shadow-sm">
+    <div className="flex flex-col md:flex-row gap-6 mt-6 px-2 max-w-[1248px] mx-auto">
+      <div className="flex-1 bg-white rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.04)] overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <h1 className="text-[18px] font-medium">Flipkart ({cartItems.length})</h1>
         </div>
@@ -35,10 +52,12 @@ export default function Cart() {
         {cartItems.map(item => (
           <div key={item.id} className="flex flex-col sm:flex-row gap-6 p-6 border-b">
             <div className="w-[110px] flex flex-col items-center gap-4">
-              <img src={item.image_url} alt={item.name} className="h-[100px] object-contain" />
+              <div className="p-2 bg-[#f8f9fa] rounded-xl overflow-hidden shadow-inner h-[110px] w-full flex items-center justify-center">
+                <img src={item.image_url} alt={item.name} className="max-h-full max-w-full object-contain" />
+              </div>
               <div className="flex items-center border rounded-sm overflow-hidden h-7 w-[90px]">
                 <button 
-                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                  onClick={() => handleAction(updateQuantity, item.id, item.quantity - 1)}
                   className="flex-1 bg-gray-50 font-bold text-lg leading-none disabled:opacity-50"
                   disabled={item.quantity <= 1}
                 >-</button>
@@ -49,7 +68,7 @@ export default function Cart() {
                   className="w-10 text-center border-x text-sm h-full font-medium pointer-events-none" 
                 />
                 <button 
-                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                  onClick={() => handleAction(updateQuantity, item.id, item.quantity + 1)}
                   className="flex-1 bg-gray-50 font-bold text-lg leading-none"
                 >+</button>
               </div>
@@ -78,9 +97,9 @@ export default function Cart() {
               </div>
 
               <div className="flex items-center gap-6">
-                <button className="font-medium hover:text-fk-blue uppercase text-[16px]">Save for later</button>
+                <button onClick={() => handleAction(() => {})} className="font-medium hover:text-fk-blue uppercase text-[16px]">Save for later</button>
                 <button 
-                  onClick={() => removeFromCart(item.id)}
+                  onClick={() => handleAction(removeFromCart, item.id)}
                   className="font-medium hover:text-fk-blue uppercase text-[16px]"
                 >Remove</button>
               </div>
@@ -89,21 +108,17 @@ export default function Cart() {
         ))}
         
         <div className="px-6 py-4 flex justify-end bg-white shadow-[0_-2px_10px_0_rgba(0,0,0,.1)] sticky bottom-0 z-10 hidden md:flex">
-          {(!isLoaded) ? null : user ? (
-            <Link href="/checkout" className="bg-[#fb641b] text-white px-14 py-4 rounded-sm font-medium text-[16px] uppercase shadow-md">
-              Place Order
-            </Link>
-          ) : (
-            <button onClick={() => alert('Please login using the top navigation bar to checkout')} className="bg-[#fb641b] text-white px-14 py-4 rounded-sm font-medium text-[16px] uppercase shadow-md">
-              Login to Checkout
-            </button>
-          )}
+          <button 
+            onClick={handleCheckout} 
+            className="bg-[#fb641b] text-white px-14 py-4 rounded-sm font-medium text-[16px] uppercase shadow-md"
+          >
+            Place Order
+          </button>
         </div>
       </div>
 
-      {/* Right: Price Details */}
       <div className="w-full md:w-[350px]">
-        <div className="bg-white shadow-sm sticky top-[72px]">
+        <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.04)] sticky top-[80px] overflow-hidden">
           <div className="px-6 py-3 border-b text-gray-500 uppercase font-medium text-[15px]">
             Price Details
           </div>
@@ -132,17 +147,13 @@ export default function Cart() {
           </div>
         </div>
         
-        {/* Mobile Place order button */}
         <div className="px-4 py-4 mt-4 bg-white shadow-sm block md:hidden">
-          {(!isLoaded) ? null : user ? (
-            <Link href="/checkout" className="bg-[#fb641b] text-white w-full py-4 rounded-sm font-medium text-[16px] uppercase shadow-md block text-center">
-              Place Order
-            </Link>
-          ) : (
-             <button onClick={() => alert('Please login using the top navigation bar to checkout')} className="bg-[#fb641b] text-white w-full py-4 rounded-sm font-medium text-[16px] uppercase shadow-md block text-center">
-              Login to Checkout
-            </button>
-          )}
+           <button 
+            onClick={handleCheckout} 
+            className="bg-[#fb641b] text-white w-full py-4 rounded-sm font-medium text-[16px] uppercase shadow-md block text-center"
+           >
+            Place Order
+          </button>
         </div>
       </div>
     </div>

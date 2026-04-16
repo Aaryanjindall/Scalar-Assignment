@@ -5,6 +5,8 @@ import { useAuth } from '@/context/AuthContext';
 export default function LoginModal({ isOpen, onClose }) {
   const [phoneOrEmail, setPhoneOrEmail] = useState('');
   const [otp, setOtp] = useState('');
+  const [name, setName] = useState('');
+  const [isNewUser, setIsNewUser] = useState(false);
   const [step, setStep] = useState(1);
   const [error, setError] = useState('');
   const { login } = useAuth();
@@ -27,6 +29,7 @@ export default function LoginModal({ isOpen, onClose }) {
       });
       const data = await res.json();
       if (res.ok) {
+        setIsNewUser(!data.userExists);
         setStep(2);
       } else {
         setError(data.error);
@@ -43,7 +46,7 @@ export default function LoginModal({ isOpen, onClose }) {
       const res = await fetch('/api/auth/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone_or_email: phoneOrEmail, otp })
+        body: JSON.stringify({ phone_or_email: phoneOrEmail, otp, name: isNewUser ? name : undefined })
       });
       const data = await res.json();
       if (res.ok) {
@@ -52,6 +55,8 @@ export default function LoginModal({ isOpen, onClose }) {
         setStep(1);
         setPhoneOrEmail('');
         setOtp('');
+        setName('');
+        setIsNewUser(false);
       } else {
         setError(data.error || 'Invalid OTP');
       }
@@ -63,12 +68,10 @@ export default function LoginModal({ isOpen, onClose }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50">
       <div className="flex w-[750px] h-[528px] bg-white rounded-sm overflow-hidden relative shadow-lg">
-        {/* Close Button Outside Modal Box visually, but we place it top-right inside */}
         <button onClick={onClose} className="absolute right-4 top-4 text-3xl font-light text-black hover:text-gray-700 z-10 w-8 h-8 flex items-center justify-center leading-none">
           &times;
         </button>
 
-        {/* Left Side: Blue section */}
         <div className="w-[40%] bg-[#2874f0] px-[35px] py-[40px] flex flex-col justify-between text-white relative">
           <div>
             <h2 className="text-[28px] font-medium mb-4">Login</h2>
@@ -83,7 +86,6 @@ export default function LoginModal({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* Right Side: Form */}
         <div className="w-[60%] px-[35px] py-[50px] bg-white flex flex-col justify-between relative">
           <div>
             {step === 1 ? (
@@ -133,8 +135,25 @@ export default function LoginModal({ isOpen, onClose }) {
                   <label className="absolute left-0 top-3 text-[15px] text-[#878787] transition-all peer-focus:-top-3 peer-focus:text-[12px] peer-focus:text-fk-blue peer-valid:-top-3 peer-valid:text-[12px]">
                     Enter OTP
                   </label>
-                  {error && <div className="text-[#ff6161] text-[12px] mt-1">{error}</div>}
                 </div>
+
+                {isNewUser && (
+                  <div className="relative mb-6">
+                    <input 
+                      type="text" 
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full border-b border-gray-300 py-2 outline-none focus:border-fk-blue transition-colors peer bg-transparent text-[15px]"
+                      placeholder=" "
+                      required
+                    />
+                    <label className="absolute left-0 top-3 text-[15px] text-[#878787] transition-all peer-focus:-top-3 peer-focus:text-[12px] peer-focus:text-fk-blue peer-valid:-top-3 peer-valid:text-[12px]">
+                      Enter your Name
+                    </label>
+                  </div>
+                )}
+
+                {error && <div className="text-[#ff6161] text-[12px] mt-1">{error}</div>}
 
                 <button 
                   type="submit" 

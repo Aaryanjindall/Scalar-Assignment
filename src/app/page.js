@@ -3,7 +3,7 @@ import CategoriesBar from '@/components/CategoriesBar';
 import HeroCarousel from '@/components/HeroCarousel';
 import { query } from '@/lib/db';
 
-export const dynamic = 'force-dynamic'; // Ensures realtime DB fetch when search/category changes
+export const dynamic = 'force-dynamic';
 
 export default async function Home(props) {
   const searchParams = await props.searchParams;
@@ -36,7 +36,6 @@ export default async function Home(props) {
     console.error("Failed to fetch products directly from DB", e);
   }
 
-  // To simulate the 'Add to your wishlist' section, pick first 4 items
   const wishlistSuggestions = products.slice(0, 4);
 
   return (
@@ -46,7 +45,6 @@ export default async function Home(props) {
 
       <div className="w-full max-w-[1248px] mx-auto mt-4 px-2 md:px-0">
         
-        {/* Wishlist Suggestion Block (Only when not searching) */}
         {!search && !category && wishlistSuggestions.length > 0 && (
           <div className="w-full bg-[#d5f3e6] p-4 rounded-sm shadow-sm mb-4">
             <h2 className="text-[22px] font-medium text-[#212121] mb-4">Add to your wishlist</h2>
@@ -59,7 +57,6 @@ export default async function Home(props) {
         )}
 
         <div className="flex flex-col md:flex-row gap-2 mt-2">
-          {/* Main Content Area */}
           <div className="flex-1 bg-white shadow-sm p-4 min-h-[500px]">
             {(search || category) && (
               <h2 className="text-[16px] mb-4 font-medium border-b pb-2">

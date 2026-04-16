@@ -3,7 +3,7 @@ import { query } from '@/lib/db';
 
 export async function POST(request) {
   try {
-    const { phone_or_email, otp } = await request.json();
+    const { phone_or_email, otp, name } = await request.json();
 
     if (!phone_or_email || !otp) {
       return NextResponse.json({ error: 'Phone/email and OTP are required' }, { status: 400 });
@@ -21,7 +21,7 @@ export async function POST(request) {
       // Create new user
       const insertRes = await query(
         'INSERT INTO users (phone_or_email, name) VALUES ($1, $2) RETURNING id, phone_or_email, name',
-        [phone_or_email, 'New User']
+        [phone_or_email, name || 'New User']
       );
       user = insertRes.rows[0];
     } else {

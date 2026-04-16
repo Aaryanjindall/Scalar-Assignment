@@ -30,3 +30,35 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
   }
 }
+
+export async function POST(request) {
+  try {
+    const data = await request.json();
+    const { name, description, price, category, stock, image_url, specs } = data;
+
+    if (!name || !price || !category) {
+      return NextResponse.json({ error: 'Name, price, and category are required' }, { status: 400 });
+    }
+
+    const sql = `
+      INSERT INTO products (name, description, price, category, stock, image_url, specs)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `;
+    const params = [
+      name, 
+      description || '', 
+      price, 
+      category, 
+      stock || 10, 
+      image_url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=600&fit=crop', 
+      specs || {}
+    ];
+
+    const { rows } = await query(sql, params);
+    return NextResponse.json({ success: true, product: rows[0] });
+  } catch (error) {
+    console.error('Failed to add product:', error);
+    return NextResponse.json({ error: 'Failed to add product' }, { status: 500 });
+  }
+}
