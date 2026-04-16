@@ -1,6 +1,8 @@
 const { Pool } = require('pg'); 
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 const pool = new Pool({ 
-  connectionString: 'postgresql://neondb_owner:npg_Oj6Vlbp0WzSI@ep-crimson-shape-adu6np0z-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require' 
+  connectionString: process.env.DATABASE_URL
 }); 
 
 const idToImage = {

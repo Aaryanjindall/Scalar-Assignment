@@ -6,7 +6,7 @@ export default function LoginModal({ isOpen, onClose }) {
   const [phoneOrEmail, setPhoneOrEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [name, setName] = useState('');
-  const [isNewUser, setIsNewUser] = useState(false);
+  const [isSignUpMode, setIsSignUpMode] = useState(false);
   const [step, setStep] = useState(1);
   const [error, setError] = useState('');
   const { login } = useAuth();
@@ -20,6 +20,10 @@ export default function LoginModal({ isOpen, onClose }) {
       setError('Please enter valid Email ID/Mobile number');
       return;
     }
+    if (isSignUpMode && !name) {
+      setError('Please enter your name');
+      return;
+    }
     
     try {
       const res = await fetch('/api/auth/login', {
@@ -29,7 +33,6 @@ export default function LoginModal({ isOpen, onClose }) {
       });
       const data = await res.json();
       if (res.ok) {
-        setIsNewUser(!data.userExists);
         setStep(2);
       } else {
         setError(data.error);
@@ -46,7 +49,7 @@ export default function LoginModal({ isOpen, onClose }) {
       const res = await fetch('/api/auth/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone_or_email: phoneOrEmail, otp, name: isNewUser ? name : undefined })
+        body: JSON.stringify({ phone_or_email: phoneOrEmail, otp, name: name || undefined })
       });
       const data = await res.json();
       if (res.ok) {
@@ -56,7 +59,7 @@ export default function LoginModal({ isOpen, onClose }) {
         setPhoneOrEmail('');
         setOtp('');
         setName('');
-        setIsNewUser(false);
+        setIsSignUpMode(false);
       } else {
         setError(data.error || 'Invalid OTP');
       }
@@ -74,8 +77,10 @@ export default function LoginModal({ isOpen, onClose }) {
 
         <div className="w-[40%] bg-[#2874f0] px-[35px] py-[40px] flex flex-col justify-between text-white relative">
           <div>
-            <h2 className="text-[28px] font-medium mb-4">Login</h2>
-            <p className="text-[18px] text-[#dbe1e1] leading-tight pr-4">Get access to your Orders, Wishlist and Recommendations</p>
+            <h2 className="text-[28px] font-medium mb-4">{isSignUpMode ? 'Sign Up' : 'Login'}</h2>
+            <p className="text-[18px] text-[#dbe1e1] leading-tight pr-4">
+              {isSignUpMode ? "Looks like you're new here! Sign up to get started" : "Get access to your Orders, Wishlist and Recommendations"}
+            </p>
           </div>
           <div className="flex justify-center -mb-8">
             <img 
@@ -104,6 +109,22 @@ export default function LoginModal({ isOpen, onClose }) {
                   </label>
                   {error && <div className="text-[#ff6161] text-[12px] mt-1">{error}</div>}
                 </div>
+
+                {isSignUpMode && (
+                  <div className="relative mb-6">
+                    <input 
+                      type="text" 
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full border-b border-gray-300 py-2 outline-none focus:border-fk-blue transition-colors peer bg-transparent text-[15px]"
+                      placeholder=" "
+                      required
+                    />
+                    <label className="absolute left-0 top-3 text-[15px] text-[#878787] transition-all peer-focus:-top-3 peer-focus:text-[12px] peer-focus:text-fk-blue peer-valid:-top-3 peer-valid:text-[12px]">
+                      Enter your Name
+                    </label>
+                  </div>
+                )}
                 
                 <p className="text-[12px] text-[#878787] mt-8 mb-4 tracking-wide font-medium">
                   By continuing, you agree to Flipkart's <a href="#" className="text-[#2874f0]">Terms of Use</a> and <a href="#" className="text-[#2874f0]">Privacy Policy</a>.
@@ -137,22 +158,6 @@ export default function LoginModal({ isOpen, onClose }) {
                   </label>
                 </div>
 
-                {isNewUser && (
-                  <div className="relative mb-6">
-                    <input 
-                      type="text" 
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full border-b border-gray-300 py-2 outline-none focus:border-fk-blue transition-colors peer bg-transparent text-[15px]"
-                      placeholder=" "
-                      required
-                    />
-                    <label className="absolute left-0 top-3 text-[15px] text-[#878787] transition-all peer-focus:-top-3 peer-focus:text-[12px] peer-focus:text-fk-blue peer-valid:-top-3 peer-valid:text-[12px]">
-                      Enter your Name
-                    </label>
-                  </div>
-                )}
-
                 {error && <div className="text-[#ff6161] text-[12px] mt-1">{error}</div>}
 
                 <button 
@@ -166,7 +171,12 @@ export default function LoginModal({ isOpen, onClose }) {
           </div>
 
           <div className="text-center mt-auto pb-4">
-            <a href="#" className="text-fk-blue font-medium text-[14px]">New to Flipkart? Create an account</a>
+            <button 
+              onClick={() => { setIsSignUpMode(!isSignUpMode); setStep(1); setError(''); }}
+              className="text-fk-blue font-medium text-[14px] hover:underline cursor-pointer"
+            >
+              {isSignUpMode ? 'Existing User? Log in' : 'New to Flipkart? Create an account'}
+            </button>
           </div>
         </div>
       </div>
